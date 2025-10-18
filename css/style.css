@@ -1,0 +1,10 @@
+/* style.css - styled to match clean dashboard look */
+body { background:#f4f6fb; font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; color:#2b2b2b; }
+.navbar-brand { font-weight:700; }
+.list-group .active { background:#1f6feb; border-color:#1f6feb; color:#fff; }
+.card { border-radius:8px; box-shadow: none; }
+.table-sm td, .table-sm th { vertical-align: middle; }
+.progress { background: #e9ecef; }
+.progress-bar { background: linear-gradient(90deg,#4f46e5,#06b6d4); }
+.container-fluid { max-width:1200px; }
+img { max-width:100%; }
