@@ -1,40 +1,23 @@
 <?php
-include('include/config.php');
+require 'includes/config.php';
 
-// Ensure uploads directory exists
-$upload_dir = 'uploads/';
-if (!is_dir($upload_dir)) mkdir($upload_dir, 0777, true);
-
-// Collect form data
-$site_name = $_POST['site_name'] ?? '';
-$theme_color = $_POST['theme_color'] ?? '#007bff';
-$site_logo = '';
-
-// Handle logo upload
-if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] == 0) {
-    $site_logo = basename($_FILES['site_logo']['name']);
-    move_uploaded_file($_FILES['site_logo']['tmp_name'], $upload_dir . $site_logo);
+// ✅ Access control
+if (!isset($_SESSION['user_id']) || strtolower($_SESSION['role']) !== 'admin') {
+    header('Location: index.php');
+    exit;
 }
 
-// Check if record exists
-$result = $mysqli->query("SELECT id FROM settings LIMIT 1");
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $system_name = trim($_POST['system_name']);
+    $notifications = $_POST['notifications'] === 'Enabled' ? 'enabled' : 'disabled';
+    $theme = $_POST['theme'] === 'Dark' ? '#000000' : '#ffffff';
 
-if ($result->num_rows > 0) {
-    $update_sql = "UPDATE settings SET 
-        site_name='$site_name',
-        theme_color='$theme_color'";
+    // Update the settings in DB
+    $stmt = $mysqli->prepare("UPDATE settings SET site_name=?, site_logo=?, theme_color=? WHERE id=1");
+    $stmt->bind_param("sss", $system_name, $notifications, $theme);
+    $stmt->execute();
 
-    if ($site_logo != '') {
-        $update_sql .= ", site_logo='$site_logo'";
-    }
-
-    $update_sql .= " WHERE id=1";
-    $mysqli->query($update_sql);
-} else {
-    $mysqli->query("INSERT INTO settings (site_name, theme_color, site_logo) 
-                    VALUES ('$site_name', '$theme_color', '$site_logo')");
+    header("Location: settings.php?saved=1");
+    exit;
 }
-
-header("Location: settings.php?saved=1");
-exit;
 ?>

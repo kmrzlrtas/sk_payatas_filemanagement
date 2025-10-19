@@ -1,7 +1,22 @@
 <?php
 require 'includes/config.php';
-if (!isset($_SESSION['user_id'])) { header('Location: index.php'); exit; }
-if (strtolower($_SESSION['role']) !== 'admin') { header('Location: official_dashboard.php'); exit; }
+
+// ✅ Access control
+if (!isset($_SESSION['user_id'])) { 
+    header('Location: index.php'); 
+    exit; 
+}
+if (strtolower($_SESSION['role']) !== 'admin') { 
+    header('Location: official_dashboard.php'); 
+    exit; 
+}
+
+// --- FETCH CURRENT SETTINGS ---
+$result = $mysqli->query("SELECT * FROM settings WHERE id = 1 LIMIT 1");
+$settings = $result->fetch_assoc();
+$system_name = $settings['site_name'] ?? 'SK FileHub';
+$theme = ($settings['theme_color'] === '#000000') ? 'Dark' : 'Light';
+$notifications = $settings['site_logo'] === 'disabled' ? 'Disabled' : 'Enabled';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,23 +50,26 @@ body{background:#f5f7fa;font-family:'Poppins',sans-serif;}
 <div class="main">
     <h3 class="fw-bold mb-4">System Settings</h3>
     <div class="card p-4">
+        <?php if (isset($_GET['saved'])): ?>
+            <div class="alert alert-success text-center">✅ Settings saved successfully!</div>
+        <?php endif; ?>
         <form action="save_settings.php" method="POST">
             <div class="mb-3">
                 <label class="form-label">System Name</label>
-                <input type="text" name="system_name" class="form-control" value="SK FileHub">
+                <input type="text" name="system_name" class="form-control" value="<?= htmlspecialchars($system_name) ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Email Notifications</label>
                 <select name="notifications" class="form-select">
-                    <option>Enabled</option>
-                    <option>Disabled</option>
+                    <option <?= $notifications === 'Enabled' ? 'selected' : '' ?>>Enabled</option>
+                    <option <?= $notifications === 'Disabled' ? 'selected' : '' ?>>Disabled</option>
                 </select>
             </div>
             <div class="mb-3">
                 <label class="form-label">Theme</label>
                 <select name="theme" class="form-select">
-                    <option>Light</option>
-                    <option>Dark</option>
+                    <option <?= $theme === 'Light' ? 'selected' : '' ?>>Light</option>
+                    <option <?= $theme === 'Dark' ? 'selected' : '' ?>>Dark</option>
                 </select>
             </div>
             <button class="btn btn-primary">Save Changes</button>

@@ -53,7 +53,7 @@ $recentActivity = $mysqli->query("
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | SK Payatas File Management</title>
+    <title>Admin Dashboard | SK FileHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -111,6 +111,9 @@ $recentActivity = $mysqli->query("
             border-radius: 50%;
             object-fit: cover;
             margin-right: 10px;
+        }
+        .btn-share {
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -178,16 +181,24 @@ $recentActivity = $mysqli->query("
                 <div class="card p-4">
                     <h5>Track & Update Files</h5>
                     <ul class="list-group mt-3">
-                        <?php while($file = $trackFiles->fetch_assoc()): ?>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                📄 <?= htmlspecialchars($file['filename']) ?>
-                                <span class="badge 
-                                    <?= $file['status']=='Updated' ? 'bg-success' : ($file['status']=='Pending' ? 'bg-warning text-dark' : 'bg-primary') ?>">
-                                    <?= $file['status'] ?>
-                                </span>
-                                <a href="generate_qr.php?file_id=<?= $file['id'] ?>" class="btn btn-sm btn-outline-secondary">QR</a>
-                            </li>
-                        <?php endwhile; ?>
+                        <?php if ($trackFiles->num_rows > 0): ?>
+                            <?php while($file = $trackFiles->fetch_assoc()): ?>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    📄 <?= htmlspecialchars($file['filename']) ?>
+                                    <div>
+                                        <span class="badge 
+                                            <?= $file['status']=='Updated' ? 'bg-success' : ($file['status']=='Pending' ? 'bg-warning text-dark' : 'bg-primary') ?>">
+                                            <?= $file['status'] ?>
+                                        </span>
+                                        <a href="share_file.php?id=<?= $file['id'] ?>" class="btn btn-sm btn-outline-primary btn-share ms-2">
+                                            <i class="fa fa-share me-1"></i> Share
+                                        </a>
+                                    </div>
+                                </li>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p class="text-muted">No files found.</p>
+                        <?php endif; ?>
                     </ul>
                 </div>
             </div>
@@ -227,6 +238,8 @@ new Chart(ctx, {
             label: 'Uploads',
             data: <?= json_encode(array_column($fileActivity, 'uploads')) ?>,
             borderColor: '#007bff',
+            backgroundColor: 'rgba(0,123,255,0.1)',
+            fill: true,
             tension: 0.3
         }]
     }

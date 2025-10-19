@@ -5,6 +5,7 @@ require 'includes/config.php';
 if (isset($_POST['login'])) {
     $user = $mysqli->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
+
     $stmt = $mysqli->prepare('SELECT id, username, password, role, fullname FROM users WHERE username = ? LIMIT 1');
     $stmt->bind_param('s', $user);
     $stmt->execute();
@@ -14,43 +15,17 @@ if (isset($_POST['login'])) {
         $_SESSION['user_id'] = $res['id'];
         $_SESSION['username'] = $res['username'];
         $_SESSION['role'] = $res['role'];
+        $_SESSION['fullname'] = $res['fullname'];
 
-        // Redirect based on role
-       $role = trim(strtolower($res['role']));
-if ($role === 'admin') {
-    header('Location: admin_dashboard.php');
-} else {
-    header('Location: official_dashboard.php');
-}
-
+        $role = strtolower(trim($res['role']));
+        if ($role === 'admin') {
+            header('Location: admin_dashboard.php');
+        } else {
+            header('Location: official_dashboard.php');
+        }
         exit;
     } else {
-        $error = 'Invalid credentials';
-    }
-}
-
-// --- REGISTER LOGIC ---
-if (isset($_POST['register'])) {
-    $fullname = $mysqli->real_escape_string($_POST['fullname']);
-    $username = $mysqli->real_escape_string($_POST['username']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $role = $mysqli->real_escape_string($_POST['role']);
-
-    $check = $mysqli->prepare("SELECT id FROM users WHERE username=? LIMIT 1");
-    $check->bind_param("s", $username);
-    $check->execute();
-    $exists = $check->get_result()->num_rows > 0;
-
-    if ($exists) {
-        $reg_error = "Username already exists!";
-    } else {
-        $stmt = $mysqli->prepare("INSERT INTO users (fullname, username, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $fullname, $username, $password, $role);
-        if ($stmt->execute()) {
-            $reg_success = "Account registered successfully!";
-        } else {
-            $reg_error = "Registration failed. Try again.";
-        }
+        $error = 'Invalid username or password.';
     }
 }
 ?>
@@ -58,7 +33,7 @@ if (isset($_POST['register'])) {
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SK Payatas File Management | Login & Register</title>
+<title>SK Payatas File Management | Login</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     body {
@@ -101,38 +76,6 @@ if (isset($_POST['register'])) {
         transform: scale(1.03);
     }
 
-    .btn-success {
-        background: #198754;
-        border: none;
-        transition: 0.3s;
-    }
-
-    .btn-success:hover {
-        background: #157347;
-        transform: scale(1.03);
-    }
-
-    .toggle-link {
-        color: #6610f2;
-        cursor: pointer;
-        text-decoration: underline;
-        font-size: 0.9rem;
-    }
-
-    .form-section {
-        display: none;
-        animation: fadeIn 0.4s ease;
-    }
-
-    .form-section.active {
-        display: block;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.98); }
-        to { opacity: 1; transform: scale(1); }
-    }
-
     .title {
         text-align: center;
         font-size: 1.6rem;
@@ -140,6 +83,12 @@ if (isset($_POST['register'])) {
         color: #444;
     }
 
+    .footer-note {
+        text-align: center;
+        font-size: 0.9rem;
+        margin-top: 10px;
+        color: #666;
+    }
 </style>
 </head>
 <body>
@@ -150,14 +99,10 @@ if (isset($_POST['register'])) {
     <!-- Alerts -->
     <?php if(!empty($error)): ?>
         <div class="alert alert-danger text-center"><?=htmlspecialchars($error)?></div>
-    <?php elseif(!empty($reg_error)): ?>
-        <div class="alert alert-danger text-center"><?=htmlspecialchars($reg_error)?></div>
-    <?php elseif(!empty($reg_success)): ?>
-        <div class="alert alert-success text-center"><?=htmlspecialchars($reg_success)?></div>
     <?php endif; ?>
 
     <!-- LOGIN FORM -->
-    <div id="loginForm" class="form-section active">
+    <div id="loginForm">
         <form method="post">
             <h5 class="text-center mb-3">Login</h5>
             <div class="mb-3">
@@ -169,37 +114,13 @@ if (isset($_POST['register'])) {
             <div class="d-grid mb-2">
                 <button name="login" class="btn btn-primary">Login</button>
             </div>
-            <p class="text-center">Don't have an account? <span class="toggle-link" onclick="toggleForms()">Register</span></p>
         </form>
     </div>
 
-    <!-- REGISTER FORM -->
-    <div id="registerForm" class="form-section">
-        <form method="post">
-            <h5 class="text-center mb-3">Register</h5>
-            <div class="mb-3"><input name="fullname" class="form-control" placeholder="Full Name" required></div>
-            <div class="mb-3"><input name="username" class="form-control" placeholder="Username" required></div>
-            <div class="mb-3"><input name="password" type="password" class="form-control" placeholder="Password" required></div>
-            <div class="mb-3">
-                <select name="role" class="form-select" required>
-                    <option value="" disabled selected>Select Role</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Official">Official</option>
-                </select>
-            </div>
-            <div class="d-grid mb-2">
-                <button name="register" class="btn btn-success">Register</button>
-            </div>
-            <p class="text-center">Already have an account? <span class="toggle-link" onclick="toggleForms()">Login</span></p>
-        </form>
-    </div>
+    <p class="footer-note">
+        Only the admin can create accounts for officials.
+    </p>
 </div>
 
-<script>
-function toggleForms() {
-    document.getElementById('loginForm').classList.toggle('active');
-    document.getElementById('registerForm').classList.toggle('active');
-}
-</script>
 </body>
 </html>
